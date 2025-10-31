@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SoleSphere - Quick Test</title>
+    <style>
+        body {
+            background: #0a0a0a;
+            color: #00ff88;
+            font-family: Arial, sans-serif;
+            padding: 40px;
+        }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .ok { background: #00ff8822; border: 1px solid #00ff88; }
+        .error { background: #ff444422; border: 1px solid #ff4444; }
+        button {
+            background: #00ff88;
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px 10px 0;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 SoleSphere Diagnostic</h1>
+    <button onclick="testBackend()">Test Backend</button>
+    <button onclick="testReact()">Check React</button>
+    <button onclick="window.location.href='/'">Go to App</button>
+    <div id="results"></div>
+
+    <script>
+        async function testBackend() {
+            const div = document.getElementById('results');
+            div.innerHTML = '<p>Testing backend...</p>';
+            
+            try {
+                const res = await fetch('http://localhost:5000/api/health');
+                const data = await res.json();
+                div.innerHTML = `<div class="status ok">✅ Backend OK: ${JSON.stringify(data)}</div>`;
+                
+                // Test products
+                const prodRes = await fetch('http://localhost:5000/api/products');
+                const prodData = await prodRes.json();
+                div.innerHTML += `<div class="status ok">✅ Products: ${prodData.items?.length || 0} found</div>`;
+            } catch (e) {
+                div.innerHTML = `<div class="status error">❌ Backend Error: ${e.message}</div>`;
+            }
+        }
+
+        function testReact() {
+            const div = document.getElementById('results');
+            div.innerHTML = `
+                <div class="status ok">✅ JavaScript is working</div>
+                <div class="status ok">✅ This HTML page loads fine</div>
+                <p>If this works but the main app doesn't, there's a React error.</p>
+                <p><strong>Open browser console (F12) and check for red errors!</strong></p>
+            `;
+        }
+
+        // Auto-test on load
+        window.onload = () => {
+            setTimeout(testBackend, 500);
+        };
+    </script>
+</body>
+</html>

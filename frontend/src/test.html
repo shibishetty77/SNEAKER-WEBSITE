@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>React Test</title>
+</head>
+<body>
+    <h1>Testing Page</h1>
+    <p>If you see this, the server is working.</p>
+    <script>
+        console.log('JavaScript is working');
+        
+        // Test API call
+        fetch('http://localhost:5000/api/products')
+            .then(res => res.json())
+            .then(data => {
+                console.log('API Response:', data);
+                document.body.innerHTML += `<h2>API Works! Found ${data.items?.length || 0} products</h2>`;
+            })
+            .catch(err => {
+                console.error('API Error:', err);
+                document.body.innerHTML += `<h2 style="color: red">API Error: ${err.message}</h2>`;
+            });
+    </script>
+</body>
+</html>
