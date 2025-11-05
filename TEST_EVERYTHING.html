@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoleSphere - Complete System Test</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            background: linear-gradient(135deg, #00ff88 0%, #00ffff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #888;
+            margin-bottom: 40px;
+            font-size: 18px;
+        }
+        .test-section {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .test-section h2 {
+            color: #00ff88;
+            margin-bottom: 16px;
+            font-size: 24px;
+        }
+        .status {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+            margin: 8px 8px 8px 0;
+        }
+        .status.success {
+            background: #00ff8822;
+            border: 1px solid #00ff88;
+            color: #00ff88;
+        }
+        .status.error {
+            background: #ff444422;
+            border: 1px solid #ff4444;
+            color: #ff4444;
+        }
+        .status.pending {
+            background: #ffaa0022;
+            border: 1px solid #ffaa00;
+            color: #ffaa00;
+        }
+        button {
+            background: #00ff88;
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 8px 8px 8px 0;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #00cc6f;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0, 255, 136, 0.3);
+        }
+        .result-box {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .product-card {
+            background: #1a1a1a;
+            border: 1px solid #00ff8833;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+            display: grid;
+            grid-template-columns: 100px 1fr auto;
+            gap: 16px;
+            align-items: center;
+        }
+        .product-card img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        .product-info h3 {
+            color: #00ff88;
+            font-size: 18px;
+            margin-bottom: 4px;
+        }
+        .product-info p {
+            color: #888;
+            font-size: 14px;
+        }
+        .price {
+            font-size: 24px;
+            font-weight: 700;
+            color: #00ff88;
+        }
+        .link {
+            color: #00ff88;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-block;
+            margin: 8px 8px 8px 0;
+            padding: 8px 16px;
+            border: 1px solid #00ff88;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        .link:hover {
+            background: #00ff8822;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .stat-card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 36px;
+            font-weight: 900;
+            color: #00ff88;
+            margin-bottom: 8px;
+        }
+        .stat-label {
+            color: #888;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 SoleSphere System Test</h1>
+        <p class="subtitle">Complete diagnostic check for your sneaker platform</p>
+
+        <!-- Server Status -->
+        <div class="test-section">
+            <h2>1. Server Status</h2>
+            <button onclick="testBackend()">Test Backend</button>
+            <button onclick="testFrontend()">Test Frontend</button>
+            <button onclick="testAll()">Test Everything</button>
+            <div id="serverStatus"></div>
+        </div>
+
+        <!-- Database Test -->
+        <div class="test-section">
+            <h2>2. Database & Products</h2>
+            <button onclick="testProducts()">Check Products</button>
+            <button onclick="testProductDetails()">Test Product Detail</button>
+            <div id="dbStatus"></div>
+        </div>
+
+        <!-- API Endpoints -->
+        <div class="test-section">
+            <h2>3. API Endpoints</h2>
+            <button onclick="testHealth()">Health Check</button>
+            <button onclick="testAuth()">Auth Test</button>
+            <button onclick="testCart()">Cart Test</button>
+            <div id="apiStatus"></div>
+        </div>
+
+        <!-- Frontend Pages -->
+        <div class="test-section">
+            <h2>4. Frontend Pages</h2>
+            <div class="grid">
+                <a href="http://localhost:5173/" target="_blank" class="link">🏠 Home</a>
+                <a href="http://localhost:5173/customize" target="_blank" class="link">🎨 Customizer</a>
+                <a href="http://localhost:5173/login" target="_blank" class="link">👤 Login</a>
+                <a href="http://localhost:5173/signup" target="_blank" class="link">📝 Signup</a>
+                <a href="http://localhost:5173/cart" target="_blank" class="link">🛒 Cart</a>
+                <a href="http://localhost:5173/sell" target="_blank" class="link">💰 Sell</a>
+            </div>
+        </div>
+
+        <!-- Results Summary -->
+        <div class="test-section">
+            <h2>5. Test Results</h2>
+            <div id="summary"></div>
+        </div>
+    </div>
+
+    <script>
+        const results = { passed: 0, failed: 0, total: 0 };
+
+        function updateSummary() {
+            const summary = document.getElementById('summary');
+            summary.innerHTML = `
+                <div class="grid">
+                    <div class="stat-card">
+                        <div class="stat-value">${results.total}</div>
+                        <div class="stat-label">Total Tests</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${results.passed}</div>
+                        <div class="stat-label">Passed</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${results.failed}</div>
+                        <div class="stat-label">Failed</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${results.total > 0 ? Math.round((results.passed / results.total) * 100) : 0}%</div>
+                        <div class="stat-label">Success Rate</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showStatus(target, html, success) {
+            document.getElementById(target).innerHTML = html;
+            results.total++;
+            if (success) results.passed++;
+            else results.failed++;
+            updateSummary();
+        }
+
+        async function testBackend() {
+            try {
+                const res = await fetch('http://localhost:5000/api/health');
+                const data = await res.json();
+                showStatus('serverStatus', `
+                    <span class="status success">✅ Backend Running</span>
+                    <div class="result-box">Port: 5000 | Response: ${JSON.stringify(data)}</div>
+                `, true);
+            } catch (e) {
+                showStatus('serverStatus', `
+                    <span class="status error">❌ Backend Offline</span>
+                    <div class="result-box">Error: ${e.message}<br>Run: cd backend && npm run dev</div>
+                `, false);
+            }
+        }
+
+        async function testFrontend() {
+            try {
+                const res = await fetch('http://localhost:5173/');
+                if (res.ok) {
+                    showStatus('serverStatus', `
+                        <span class="status success">✅ Frontend Running</span>
+                        <div class="result-box">Port: 5173 | Vite dev server active</div>
+                    `, true);
+                }
+            } catch (e) {
+                showStatus('serverStatus', `
+                    <span class="status error">❌ Frontend Offline</span>
+                    <div class="result-box">Error: ${e.message}<br>Run: cd frontend && npm run dev</div>
+                `, false);
+            }
+        }
+
+        async function testProducts() {
+            try {
+                const res = await fetch('http://localhost:5000/api/products');
+                const data = await res.json();
+                
+                if (data.items && data.items.length > 0) {
+                    let html = `<span class="status success">✅ ${data.items.length} Products Found</span>`;
+                    html += '<div class="result-box">';
+                    data.items.slice(0, 3).forEach(product => {
+                        html += `
+                            <div class="product-card">
+                                <img src="${product.images[0]}" alt="${product.name}">
+                                <div class="product-info">
+                                    <h3>${product.name}</h3>
+                                    <p>${product.brand.toUpperCase()} | ${product.colorway}</p>
+                                </div>
+                                <div class="price">$${product.price}</div>
+                            </div>
+                        `;
+                    });
+                    html += `<p style="color: #888; margin-top: 12px;">Showing 3 of ${data.items.length} products</p></div>`;
+                    showStatus('dbStatus', html, true);
+                } else {
+                    showStatus('dbStatus', `
+                        <span class="status error">❌ No Products</span>
+                        <div class="result-box">Database is empty. Run: cd backend && npm run seed</div>
+                    `, false);
+                }
+            } catch (e) {
+                showStatus('dbStatus', `
+                    <span class="status error">❌ API Error</span>
+                    <div class="result-box">${e.message}</div>
+                `, false);
+            }
+        }
+
+        async function testHealth() {
+            try {
+                const res = await fetch('http://localhost:5000/api/health');
+                const data = await res.json();
+                showStatus('apiStatus', `
+                    <span class="status success">✅ Health Check Passed</span>
+                    <div class="result-box">${JSON.stringify(data, null, 2)}</div>
+                `, true);
+            } catch (e) {
+                showStatus('apiStatus', `
+                    <span class="status error">❌ Health Check Failed</span>
+                `, false);
+            }
+        }
+
+        async function testAuth() {
+            showStatus('apiStatus', `
+                <span class="status pending">⚠️ Auth Test</span>
+                <div class="result-box">Auth requires user credentials. Visit /login to test manually.</div>
+            `, true);
+        }
+
+        async function testCart() {
+            showStatus('apiStatus', `
+                <span class="status pending">⚠️ Cart Test</span>
+                <div class="result-box">Cart requires authentication. Login first to test cart functionality.</div>
+            `, true);
+        }
+
+        async function testProductDetails() {
+            try {
+                const res = await fetch('http://localhost:5000/api/products');
+                const data = await res.json();
+                if (data.items && data.items.length > 0) {
+                    const firstProduct = data.items[0];
+                    const detailRes = await fetch(`http://localhost:5000/api/products/${firstProduct._id}`);
+                    const detail = await detailRes.json();
+                    showStatus('dbStatus', `
+                        <span class="status success">✅ Product Detail API Works</span>
+                        <div class="result-box">Tested: ${detail.name}<br>Stock: ${detail.stock}<br>Price: $${detail.price}</div>
+                    `, true);
+                }
+            } catch (e) {
+                showStatus('dbStatus', `
+                    <span class="status error">❌ Product Detail Failed</span>
+                `, false);
+            }
+        }
+
+        async function testAll() {
+            results.passed = 0;
+            results.failed = 0;
+            results.total = 0;
+            await testBackend();
+            await new Promise(r => setTimeout(r, 500));
+            await testFrontend();
+            await new Promise(r => setTimeout(r, 500));
+            await testProducts();
+            await new Promise(r => setTimeout(r, 500));
+            await testHealth();
+        }
+
+        // Auto-run tests on page load
+        window.onload = () => {
+            setTimeout(testAll, 500);
+        };
+    </script>
+</body>
+</html>

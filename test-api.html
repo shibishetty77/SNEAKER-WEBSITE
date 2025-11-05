@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoleSphere API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        h1 { color: #00ff88; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #00ff8833; border: 1px solid #00ff88; }
+        .error { background: #ff444433; border: 1px solid #ff4444; }
+        .product { 
+            background: #2a2a2a; 
+            padding: 15px; 
+            margin: 10px 0; 
+            border-radius: 8px;
+            border: 1px solid #00ff8822;
+        }
+        button {
+            background: #00ff88;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover { background: #00cc6f; }
+        pre { 
+            background: #0a0a0a; 
+            padding: 15px; 
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🛠️ SoleSphere API Diagnostic Tool</h1>
+    
+    <div>
+        <button onclick="testBackend()">Test Backend Health</button>
+        <button onclick="testProducts()">Test Products API</button>
+        <button onclick="testFrontend()">Test Frontend Connection</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+        const results = document.getElementById('results');
+
+        function showResult(title, message, isSuccess = true) {
+            const div = document.createElement('div');
+            div.className = `status ${isSuccess ? 'success' : 'error'}`;
+            div.innerHTML = `<strong>${title}</strong><br>${message}`;
+            results.appendChild(div);
+        }
+
+        async function testBackend() {
+            results.innerHTML = '<h2>Testing Backend...</h2>';
+            try {
+                const response = await fetch('http://localhost:5000/api/health');
+                const data = await response.json();
+                showResult('✅ Backend Health', `Status: ${response.status}<br>Response: ${JSON.stringify(data)}`, true);
+            } catch (error) {
+                showResult('❌ Backend Error', error.message, false);
+            }
+        }
+
+        async function testProducts() {
+            results.innerHTML = '<h2>Testing Products API...</h2>';
+            try {
+                const response = await fetch('http://localhost:5000/api/products');
+                const data = await response.json();
+                
+                showResult('✅ Products API Response', 
+                    `Total Products: ${data.items?.length || 0}<br>
+                     Total Count: ${data.total}<br>
+                     Status: ${response.status}`, 
+                    true
+                );
+
+                if (data.items && data.items.length > 0) {
+                    const productsDiv = document.createElement('div');
+                    productsDiv.innerHTML = '<h3>Sample Products:</h3>';
+                    data.items.slice(0, 3).forEach(product => {
+                        productsDiv.innerHTML += `
+                            <div class="product">
+                                <strong>${product.name}</strong> - $${product.price}<br>
+                                Brand: ${product.brand} | Stock: ${product.stock}<br>
+                                Colorway: ${product.colorway}
+                            </div>
+                        `;
+                    });
+                    results.appendChild(productsDiv);
+                } else {
+                    showResult('⚠️ No Products', 'Database is empty. Run: npm run seed', false);
+                }
+
+                // Show raw JSON
+                const jsonDiv = document.createElement('div');
+                jsonDiv.innerHTML = '<h3>Raw JSON Response:</h3><pre>' + 
+                    JSON.stringify(data, null, 2) + '</pre>';
+                results.appendChild(jsonDiv);
+
+            } catch (error) {
+                showResult('❌ Products API Error', error.message, false);
+            }
+        }
+
+        async function testFrontend() {
+            results.innerHTML = '<h2>Testing Frontend Configuration...</h2>';
+            
+            // Check frontend URL
+            showResult('Frontend URL', window.location.href, true);
+            
+            // Check if running on correct port
+            if (window.location.port === '5173' || window.location.port === '5174') {
+                showResult('✅ Frontend Port', `Running on port ${window.location.port}`, true);
+            } else {
+                showResult('⚠️ Unexpected Port', `Running on port ${window.location.port}`, false);
+            }
+
+            // Test if we can reach backend from browser
+            try {
+                const response = await fetch('http://localhost:5000/api/health');
+                showResult('✅ Backend Accessible from Browser', 'CORS is working correctly', true);
+            } catch (error) {
+                showResult('❌ Cannot Reach Backend', 
+                    'CORS might be blocking or backend is down<br>' + error.message, 
+                    false
+                );
+            }
+        }
+
+        // Auto-run tests on load
+        window.onload = () => {
+            setTimeout(testBackend, 500);
+            setTimeout(testProducts, 1500);
+            setTimeout(testFrontend, 2500);
+        };
+    </script>
+</body>
+</html>
