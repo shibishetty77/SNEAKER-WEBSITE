@@ -8,14 +8,6 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(localStorage.getItem('token'))
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    if (!token) return
-    api.setToken(token)
-    api.get('/auth/me')
-      .then((res) => setUser(res.user))
-      .catch(() => logout())
-  }, [])
-
   const login = async (email, password) => {
     setLoading(true)
     try {
@@ -54,6 +46,14 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('token')
     api.setToken(null)
   }
+
+  useEffect(() => {
+    if (!token) return
+    api.setToken(token)
+    api.get('/auth/me')
+      .then((res) => setUser(res.user))
+      .catch(() => logout())
+  }, [token])
 
   return (
     <AuthContext.Provider value={{ user, token, login, signup, logout, loading }}>

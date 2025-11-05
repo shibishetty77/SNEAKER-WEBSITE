@@ -1,22 +1,27 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import api from '../utils/api.js'
 import ProductCard from '../components/ProductCard'
+import { useCart } from '../state/CartContext'
 import ShoeAnimation3D from '../components/ShoeAnimation3D'
 
 export default function Home(){
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
+  const [filtering, setFiltering] = useState(false)
   const [error, setError] = useState('')
   const [maxPrice, setMaxPrice] = useState(500)
   const [minRating, setMinRating] = useState(0)
   const [brands, setBrands] = useState({ nike: false, adidas: false, puma: false, newbalance: false, underarmour: false })
+  const { add } = useCart()
+  const debounceTimer = useRef(null)
+  const isInitialLoad = useRef(true)
 
-  const add = (id, qty) => {
-    alert('Please login to add items to cart')
-  }
-
-  const load = async ()=>{
-    setLoading(true)
+  const load = async (isInitial = false)=>{
+    if(isInitial) {
+      setLoading(true)
+    } else {
+      setFiltering(true)
+    }
     try{
       const selected = Object.entries(brands).filter(([,v])=>v).map(([k])=>k)
       const qs = new URLSearchParams()
@@ -25,26 +30,80 @@ export default function Home(){
       if(selected.length) qs.set('brand', selected.join(','))
       const res = await api.get(`/products?${qs.toString()}`)
       setProducts(res.items || [])
+      setError('')
     }catch(e){
       setError(e.message)
     }finally{
-      setLoading(false)
+      if(isInitial) {
+        setLoading(false)
+      } else {
+        setFiltering(false)
+      }
     }
   }
 
-  useEffect(()=>{ load() // eslint-disable-next-line
+  useEffect(()=>{ 
+    load(true)
+    isInitialLoad.current = false
+    // eslint-disable-next-line
   },[])
 
-  useEffect(()=>{ load() // eslint-disable-next-line
+  useEffect(()=>{ 
+    if(isInitialLoad.current) return
+    
+    // Clear existing timer
+    if(debounceTimer.current) clearTimeout(debounceTimer.current)
+    
+    // Set new timer for debounced API call
+    debounceTimer.current = setTimeout(() => {
+      load(false)
+    }, 300)
+    
+    // Cleanup
+    return () => {
+      if(debounceTimer.current) clearTimeout(debounceTimer.current)
+    }
+    // eslint-disable-next-line
   },[maxPrice, minRating, brands])
 
   if(loading) return <div className="container">Loading...</div>
-  if(error) return <div className="container" style={{color:'#ff4444'}}>Error: {error}</div>
+  if(error) return <div className="container">{error}</div>
 
   return (
     <div className="container">
-      <ShoeAnimation3D />
+      <div className="hero-section">
+        <ShoeAnimation3D />
+      </div>
       
+      {/* Filtering indicator */}
+      {filtering && (
+        <div style={{
+          position: 'fixed',
+          top: 80,
+          right: 20,
+          background: 'var(--primary)',
+          color: 'white',
+          padding: '12px 20px',
+          borderRadius: 'var(--radius-md)',
+          boxShadow: '0 4px 12px var(--shadow)',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          animation: 'slideIn 0.3s ease'
+        }}>
+          <div className="spinner" style={{
+            width: 16,
+            height: 16,
+            border: '2px solid rgba(255,255,255,0.3)',
+            borderTop: '2px solid white',
+            borderRadius: '50%',
+            animation: 'spin 0.6s linear infinite'
+          }} />
+          <span>Updating results...</span>
+        </div>
+      )}
+
       <div className="filter-section">
         <h3>Filter Premium Collection</h3>
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(220px, 1fr))',gap:24}}>
@@ -90,6 +149,34 @@ export default function Home(){
           </div>
         </div>
       )}
+
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        
+        @keyframes slideIn {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+        
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   )
 }

@@ -71,7 +71,7 @@ export default function ProductDetail(){
         {product.colorway ? <div style={{fontSize:16,color:'var(--primary)',fontWeight:600,marginBottom:20}}>{product.colorway}</div> : null}
         
         <div className="row" style={{justifyContent:'space-between',marginBottom:20}}>
-          <div className="price">${Number(product.price).toFixed(2)}</div>
+          <div className="price">₹{Number(product.price).toFixed(2)}</div>
           <div className="row" style={{gap:8}}>
             <RatingStars value={summary.avgRating} />
             <strong>{Number(summary.avgRating).toFixed(1)}</strong>

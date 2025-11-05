@@ -1,37 +1,172 @@
-import { useEffect, useState } from 'react'
+import { useRef, useEffect } from 'react'
+import { Canvas, useFrame } from '@react-three/fiber'
+import { Environment, Float, PerspectiveCamera } from '@react-three/drei'
+import * as THREE from 'three'
 
-export default function ShoeAnimation3D() {
-  const [rotation, setRotation] = useState(0)
-
+function AnimatedShoe() {
+  const groupRef = useRef()
+  
+  // Initialize materials with colors matching the theme
+  const materials = useRef({
+    base: new THREE.MeshPhysicalMaterial({
+      color: new THREE.Color('#1a1a1a'), // Dark panel color
+      metalness: 0.4,
+      roughness: 0.3,
+      clearcoat: 0.9,
+      clearcoatRoughness: 0.1,
+      emissive: new THREE.Color('#0a0a0a'),
+      emissiveIntensity: 0.1,
+    }),
+    sole: new THREE.MeshPhysicalMaterial({
+      color: new THREE.Color('#0a0a0a'), // Darkest background color
+      metalness: 0.2,
+      roughness: 0.9,
+      emissive: new THREE.Color('#000000'),
+    }),
+    accent: new THREE.MeshPhysicalMaterial({
+      color: new THREE.Color('#00ff88'), // Primary green
+      metalness: 0.6,
+      roughness: 0.15,
+      emissive: new THREE.Color('#00ff88'),
+      emissiveIntensity: 0.8,
+    })
+  })
+  
+  // Cleanup function to dispose materials
   useEffect(() => {
-    const interval = setInterval(() => {
-      setRotation((prev) => (prev + 1) % 360)
-    }, 30)
-    return () => clearInterval(interval)
+    return () => {
+      if (materials.current) {
+        Object.values(materials.current).forEach(material => {
+          if (material && material.dispose) {
+            material.dispose()
+          }
+        })
+      }
+    }
   }, [])
 
+  useFrame((state) => {
+    // Guard against materials not being initialized yet
+    if (!materials.current?.accent || !groupRef.current) return
+    
+    const time = state.clock.getElapsedTime()
+    
+    // Dynamic color shift effect for accent with subtle glow
+    materials.current.accent.emissiveIntensity = 0.6 + Math.sin(time * 2) * 0.3
+    
+    // Subtle rotation animation
+    groupRef.current.rotation.y = Math.sin(time * 0.5) * 0.1
+    
+    // Subtle scale pulse for breathing effect
+    const scale = 1 + Math.sin(time * 1.5) * 0.02
+    groupRef.current.scale.set(scale * 0.8, scale * 0.8, scale * 0.8)
+  })
+
   return (
-    <div className="shoe-3d-container">
-      <div className="shoe-3d-scene">
-        <div 
-          className="shoe-3d" 
-          style={{ 
-            transform: `rotateY(${rotation}deg) rotateX(15deg)`
-          }}
-        >
-          <div className="shoe-body">
-            <div className="shoe-side shoe-left"></div>
-            <div className="shoe-side shoe-right"></div>
-            <div className="shoe-side shoe-top"></div>
-            <div className="shoe-side shoe-bottom"></div>
-            <div className="shoe-side shoe-front"></div>
-            <div className="shoe-side shoe-back"></div>
-          </div>
-          <div className="shoe-sole"></div>
-          <div className="shoe-swoosh"></div>
-          <div className="glow-effect"></div>
-        </div>
-      </div>
+    <Float
+      speed={2}
+      rotationIntensity={0.6}
+      floatIntensity={0.8}
+      floatingRange={[-0.1, 0.1]}
+    >
+      <group ref={groupRef} scale={[0.8, 0.8, 0.8]} position={[0, 0, 0]}>
+        {/* Main Body */}
+        <mesh castShadow receiveShadow position={[0, 0.5, 0.4]}>
+          <boxGeometry args={[1.5, 0.35, 2.9]} />
+          <primitive object={materials.current.base} attach="material" />
+        </mesh>
+
+        {/* Sole */}
+        <mesh castShadow receiveShadow position={[0, 0.08, 0.1]}>
+          <boxGeometry args={[1.9, 0.15, 3.6]} />
+          <primitive object={materials.current.sole} attach="material" />
+        </mesh>
+
+        {/* Toe */}
+        <mesh castShadow position={[0, 0.52, 1.8]} rotation={[0.2, 0, 0]}>
+          <sphereGeometry args={[0.75, 32, 32, 0, Math.PI * 2, 0, Math.PI / 2.5]} />
+          <primitive object={materials.current.base} attach="material" />
+        </mesh>
+
+        {/* Accents */}
+        {[-0.76, 0.76].map((x, idx) => (
+          <mesh key={idx} position={[x, 0.55, 0.5]} rotation={[0, idx === 0 ? Math.PI / 2 : -Math.PI / 2, 0]} castShadow>
+            <boxGeometry args={[2.2, 0.15, 0.04]} />
+            <primitive object={materials.current.accent} attach="material" />
+          </mesh>
+        ))}
+      </group>
+    </Float>
+  )
+}
+
+export default function ShoeAnimation3D() {
+  return (
+    <div className="shoe-3d-container" style={{ position: 'relative', width: '100%', height: '500px' }}>
+      {/* Gradient overlay for seamless blending */}
+      <div className="shoe-3d-gradient-overlay" />
+      
+      <Canvas 
+        shadows 
+        dpr={[1, 2]} 
+        camera={{ position: [0, 1, 5], fov: 45 }}
+        style={{ 
+          width: '100%', 
+          height: '100%',
+          background: 'transparent',
+          position: 'relative',
+          zIndex: 0
+        }}
+        onCreated={({ gl }) => {
+          gl.setClearColor('#0a0a0a', 0) // Match page background, fully transparent
+          gl.alpha = true
+          gl.powerPreference = "high-performance"
+        }}
+      >
+        <color attach="background" args={['#0a0a0a']} />
+        {/* Subtle fog matching page background */}
+        <fog attach="fog" args={['#0a0a0a', 8, 18]} />
+        
+        {/* Key Light - warmer, matches page accent */}
+        <spotLight
+          position={[4, 6, 2]}
+          angle={0.5}
+          penumbra={0.7}
+          intensity={1.2}
+          color="#ffffff"
+          castShadow
+          shadow-mapSize={[2048, 2048]}
+          shadow-bias={-0.0001}
+          shadow-camera-far={20}
+        />
+        
+        {/* Fill Light - subtle blue tint */}
+        <pointLight position={[-4, 2, -2]} intensity={0.5} color="#b0c4de" />
+        
+        {/* Primary Accent Light - green glow */}
+        <pointLight position={[2, -1, -2]} intensity={0.6} color="#00ff88" />
+        
+        {/* Secondary Accent Light - opposite side */}
+        <pointLight position={[-2, 1, 2]} intensity={0.3} color="#00ff88" />
+        
+        {/* Ground Plane for Shadow - subtle and blending */}
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1, 0]} receiveShadow>
+          <planeGeometry args={[50, 50]} />
+          <shadowMaterial transparent opacity={0.15} />
+        </mesh>
+        
+        <AnimatedShoe />
+        
+        {/* Custom environment with darker tones */}
+        <Environment 
+          preset="night" 
+          background={false}
+        />
+        
+        {/* Subtle ambient light matching page background */}
+        <ambientLight intensity={0.15} color="#0a0a0a" />
+      </Canvas>
+      
       <div className="shoe-3d-text">
         <h2>Premium Sneakers</h2>
         <p>Curated Collection of Luxury Footwear</p>
@@ -41,170 +176,73 @@ export default function ShoeAnimation3D() {
         .shoe-3d-container {
           position: relative;
           width: 100%;
-          max-width: 600px;
-          margin: 0 auto 60px;
-          padding: 60px 20px;
+          height: 500px;
+          margin: 0 auto 40px;
+          border-radius: var(--radius-lg);
+          overflow: hidden;
+          background: var(--bg);
+          background-image: 
+            radial-gradient(at 0% 0%, rgba(0, 255, 136, 0.05) 0px, transparent 50%),
+            radial-gradient(at 100% 100%, rgba(0, 255, 136, 0.03) 0px, transparent 50%);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--border), inset 0 0 60px rgba(0, 255, 136, 0.05);
+          border: 1px solid var(--border);
         }
-
-        .shoe-3d-scene {
-          perspective: 1000px;
-          perspective-origin: 50% 50%;
-          position: relative;
-          height: 300px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .shoe-3d {
-          position: relative;
-          transform-style: preserve-3d;
-          width: 280px;
-          height: 180px;
-          transition: transform 0.05s linear;
-        }
-
-        .shoe-body {
+        
+        .shoe-3d-gradient-overlay {
           position: absolute;
-          width: 100%;
-          height: 100%;
-          transform-style: preserve-3d;
-        }
-
-        .shoe-side {
-          position: absolute;
-          background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-          border: 1px solid rgba(0, 255, 136, 0.3);
-          box-shadow: 
-            inset 0 0 30px rgba(0, 255, 136, 0.1),
-            0 0 20px rgba(0, 255, 136, 0.2);
-        }
-
-        .shoe-left {
-          width: 80px;
-          height: 100%;
-          transform: rotateY(90deg) translateZ(100px);
-          border-radius: 40px 40px 0 0;
-        }
-
-        .shoe-right {
-          width: 80px;
-          height: 100%;
-          transform: rotateY(-90deg) translateZ(180px);
-          border-radius: 40px 40px 0 0;
-        }
-
-        .shoe-top {
-          width: 280px;
-          height: 80px;
-          transform: rotateX(90deg) translateZ(90px);
-          border-radius: 80px 80px 0 0;
-          background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
-        }
-
-        .shoe-bottom {
-          width: 280px;
-          height: 80px;
-          transform: rotateX(-90deg) translateZ(100px);
-        }
-
-        .shoe-front {
-          width: 280px;
-          height: 100%;
-          transform: translateZ(40px);
-          border-radius: 80px 80px 0 0;
-          background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 50%, #2d2d2d 100%);
-          box-shadow: inset 0 10px 40px rgba(0, 255, 136, 0.15);
-        }
-
-        .shoe-back {
-          width: 280px;
-          height: 100%;
-          transform: translateZ(-40px) rotateY(180deg);
-          border-radius: 80px 80px 0 0;
-        }
-
-        .shoe-sole {
-          position: absolute;
-          bottom: -15px;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 90%;
-          height: 30px;
-          background: linear-gradient(90deg, #00ff88 0%, #00cc6f 100%);
-          border-radius: 140px;
-          box-shadow: 
-            0 5px 20px rgba(0, 255, 136, 0.5),
-            inset 0 2px 10px rgba(255, 255, 255, 0.3);
-          transform-style: preserve-3d;
-        }
-
-        .shoe-swoosh {
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%) translateZ(45px);
-          width: 100px;
-          height: 60px;
-          background: linear-gradient(135deg, transparent 30%, #00ff88 30%, #00ff88 35%, transparent 35%);
-          opacity: 0.8;
-          filter: blur(0.5px);
-          animation: pulse 2s ease-in-out infinite;
-        }
-
-        .glow-effect {
-          position: absolute;
-          top: -50%;
-          left: -50%;
-          width: 200%;
-          height: 200%;
-          background: radial-gradient(circle, rgba(0, 255, 136, 0.2) 0%, transparent 70%);
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: 
+            radial-gradient(circle at 30% 50%, rgba(0, 255, 136, 0.08) 0%, transparent 50%),
+            radial-gradient(circle at 70% 50%, rgba(0, 255, 136, 0.05) 0%, transparent 50%);
           pointer-events: none;
-          animation: glow-pulse 3s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-          0%, 100% {
-            opacity: 0.6;
-            transform: translate(-50%, -50%) translateZ(45px) scale(1);
-          }
-          50% {
-            opacity: 1;
-            transform: translate(-50%, -50%) translateZ(45px) scale(1.05);
-          }
-        }
-
-        @keyframes glow-pulse {
-          0%, 100% {
-            opacity: 0.5;
-            transform: scale(1);
-          }
-          50% {
-            opacity: 0.8;
-            transform: scale(1.1);
-          }
+          z-index: 1;
+          opacity: 0.6;
         }
 
         .shoe-3d-text {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
           text-align: center;
-          margin-top: 40px;
-          animation: fadeInUp 1s ease-out;
+          color: #ffffff;
+          z-index: 10;
+          pointer-events: none;
+          padding: 32px 24px;
+          background: linear-gradient(
+            to top,
+            rgba(10, 10, 10, 0.95) 0%,
+            rgba(10, 10, 10, 0.7) 40%,
+            transparent 100%
+          );
+          backdrop-filter: blur(8px);
         }
 
         .shoe-3d-text h2 {
-          font-size: 36px;
+          font-size: 2.5rem;
+          margin: 0;
+          text-transform: uppercase;
+          letter-spacing: 3px;
           font-weight: 900;
-          margin: 0 0 12px 0;
-          background: linear-gradient(135deg, var(--primary) 0%, #00ffff 100%);
-          background-clip: text;
+          background: linear-gradient(135deg, var(--primary) 0%, #00a8ff 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
+          background-clip: text;
+          filter: drop-shadow(0 0 8px rgba(0, 255, 136, 0.3));
+          animation: fadeInUp 1s ease-out 0.3s both;
         }
 
         .shoe-3d-text p {
+          font-size: 1.1rem;
+          margin: 12px 0 0;
+          opacity: 0.85;
           color: var(--text-secondary);
-          font-size: 16px;
-          margin: 0;
+          font-weight: 500;
+          letter-spacing: 1px;
+          animation: fadeInUp 1s ease-out 0.5s both;
         }
 
         @keyframes fadeInUp {
@@ -220,20 +258,31 @@ export default function ShoeAnimation3D() {
 
         @media (max-width: 768px) {
           .shoe-3d-container {
-            padding: 40px 20px;
+            height: 400px;
+            margin-bottom: 32px;
           }
-          .shoe-3d-scene {
-            height: 200px;
-          }
-          .shoe-3d {
-            width: 200px;
-            height: 130px;
+          .shoe-3d-text {
+            padding: 24px 20px;
           }
           .shoe-3d-text h2 {
-            font-size: 28px;
+            font-size: 1.8rem;
+            letter-spacing: 2px;
           }
           .shoe-3d-text p {
-            font-size: 14px;
+            font-size: 0.9rem;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .shoe-3d-container {
+            height: 350px;
+          }
+          .shoe-3d-text h2 {
+            font-size: 1.5rem;
+            letter-spacing: 1px;
+          }
+          .shoe-3d-text p {
+            font-size: 0.85rem;
           }
         }
       `}</style>

@@ -88,7 +88,7 @@ export default function MySneakersPage() {
                   </div>
                 ) : null}
                 <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                  <span className="price" style={{ fontSize: 20 }}>${product.price?.toFixed(2)}</span>
+                  <span className="price" style={{ fontSize: 20 }}>₹{product.price?.toFixed(2)}</span>
                   <span className="badge">
                     Stock: {product.stock || 0}
                   </span>

@@ -26,19 +26,41 @@ export function CartProvider({ children }) {
   }, [token])
 
   const add = async (productId, quantity = 1) => {
+    try {
     const res = await api.post('/cart', { productId, quantity })
-    setItems(res)
+      setItems(Array.isArray(res) ? res : [])
+    } catch (e) {
+      console.error('Cart add error:', e)
+      throw e
+    }
   }
   const update = async (productId, quantity) => {
+    try {
     const res = await api.put('/cart', { productId, quantity })
-    setItems(res)
+      setItems(Array.isArray(res) ? res : [])
+    } catch (e) {
+      console.error('Cart update error:', e)
+      throw e
+    }
   }
   const remove = async (productId) => {
+    try {
     const res = await api.del(`/cart/${productId}`)
-    setItems(res)
+      setItems(Array.isArray(res) ? res : [])
+    } catch (e) {
+      console.error('Cart remove error:', e)
+      throw e
+    }
   }
 
-  const total = Array.isArray(items) ? items.reduce((sum, i) => sum + (i?.price || 0) * (i?.quantity || 0), 0) : 0
+  // Calculate total - handle both price directly on item and price from populated product
+  const total = Array.isArray(items) 
+    ? items.reduce((sum, i) => {
+        const price = i?.price || i?.product?.price || 0
+        const quantity = i?.quantity || 0
+        return sum + (price * quantity)
+      }, 0)
+    : 0
 
   return (
     <CartContext.Provider value={{ items, add, update, remove, total, loading }}>

@@ -8,6 +8,7 @@ import SignupPage from './pages/SignupPage.jsx'
 import SellPage from './pages/SellPage.jsx'
 import MySneakersPage from './pages/MySneakersPage.jsx'
 import CustomizerPage from './pages/CustomizerPage.jsx'
+import ProfilePage from './pages/ProfilePage.jsx'
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
           <Route path="/sell" element={<SellPage />} />
           <Route path="/my-sneakers" element={<MySneakersPage />} />
           <Route path="/customize" element={<CustomizerPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
           <Route path="*" element={<div className="container" style={{padding:60,textAlign:'center',color:'var(--text-secondary)'}}>
             <h2>Page not found</h2>
             <p>This page requires authentication features.</p>

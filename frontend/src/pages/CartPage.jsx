@@ -8,11 +8,16 @@ export default function CartPage(){
   const [buying, setBuying] = useState(null)
 
   const handleBuy = async (item) => {
-    setBuying(item.product._id)
+    const productId = item?.product?._id || item?.product || item?._id
+    if (!productId) {
+      alert('Invalid product')
+      return
+    }
+    setBuying(productId)
     try {
-      await api.post(`/products/${item.product._id}/purchase`, { quantity: item.quantity })
-      alert(`Successfully purchased ${item.product.name}!`)
-      remove(String(item.product._id))
+      await api.post(`/products/${productId}/purchase`, { quantity: item?.quantity || 1 })
+      alert(`Successfully purchased ${item?.product?.name || 'item'}!`)
+      remove(String(productId))
     } catch (e) {
       alert(e.message || 'Purchase failed')
     } finally {
@@ -44,29 +49,35 @@ export default function CartPage(){
       </div>
       
       <div style={{display:'grid',gap:20}}>
-        {items.map((it)=> (
-          <div key={it.product} className="cart-item-card">
-            <Link to={`/product/${it.product._id}`} className="cart-item-image">
+        {items.map((it, idx)=> {
+          const productId = it?.product?._id || it?.product || it?._id || `item-${idx}`
+          const product = it?.product || {}
+          const price = it?.price || product?.price || 0
+          const quantity = it?.quantity || 0
+          
+          return (
+          <div key={productId} className="cart-item-card">
+            <Link to={`/product/${productId}`} className="cart-item-image">
               <img 
-                src={it?.product?.images?.[0] || 'https://picsum.photos/400/400?blur=3'} 
-                alt={it?.product?.name||'item'}
+                src={product?.images?.[0] || 'https://picsum.photos/400/400?blur=3'} 
+                alt={product?.name || 'item'}
               />
             </Link>
             <div className="cart-item-details">
               <div>
                 <div style={{fontSize:11,textTransform:'uppercase',color:'var(--text-muted)',fontWeight:700,letterSpacing:1,marginBottom:4}}>
-                  {it?.product?.brand}
+                  {product?.brand || 'Unknown Brand'}
                 </div>
-                <Link to={`/product/${it.product._id}`} style={{textDecoration:'none',color:'inherit'}}>
-                  <h3 style={{fontSize:20,fontWeight:700,margin:'0 0 4px 0'}}>{it?.product?.name || 'Item'}</h3>
+                <Link to={`/product/${productId}`} style={{textDecoration:'none',color:'inherit'}}>
+                  <h3 style={{fontSize:20,fontWeight:700,margin:'0 0 4px 0'}}>{product?.name || 'Item'}</h3>
                 </Link>
-                {it?.product?.colorway ? (
+                {product?.colorway ? (
                   <div style={{fontSize:14,color:'var(--text-secondary)',marginBottom:8}}>
-                    {it.product.colorway}
+                    {product.colorway}
                   </div>
                 ) : null}
                 <div style={{fontSize:14,color:'var(--text-secondary)',marginTop:8}}>
-                  <span className="badge">${it.price.toFixed(2)} each</span>
+                  <span className="badge">₹{Number(price).toFixed(2)} each</span>
                 </div>
               </div>
               <div className="cart-item-actions">
@@ -76,9 +87,9 @@ export default function CartPage(){
                     className="input" 
                     type="number" 
                     min={1} 
-                    max={it?.product?.stock || 999}
-                    value={it.quantity} 
-                    onChange={(e)=>update(String(it.product._id||it.product), Number(e.target.value))} 
+                    max={product?.stock || 999}
+                    value={quantity} 
+                    onChange={(e)=>update(String(productId), Number(e.target.value))} 
                     style={{width:80,padding:'8px 12px'}}
                   />
                 </div>
@@ -86,16 +97,16 @@ export default function CartPage(){
                   <button 
                     className="btn"
                     onClick={()=>handleBuy(it)}
-                    disabled={buying === it.product._id}
+                    disabled={buying === productId}
                     style={{flex:1}}
                   >
-                    {buying === it.product._id ? 'Processing...' : 'Buy Now'}
+                    {buying === productId ? 'Processing...' : 'Buy Now'}
                   </button>
                   <button 
                     className="btn btn-danger" 
                     onClick={()=>{
-                      if(confirm(`Remove ${it.product.name} from cart?`)){
-                        remove(String(it.product._id||it.product))
+                      if(confirm(`Remove ${product?.name || 'item'} from cart?`)){
+                        remove(String(productId))
                       }
                     }}
                     style={{padding:'12px 16px'}}
@@ -111,22 +122,22 @@ export default function CartPage(){
             <div className="cart-item-total">
               <div style={{textAlign:'right'}}>
                 <div style={{fontSize:13,color:'var(--text-secondary)',marginBottom:6}}>Subtotal</div>
-                <div className="price" style={{fontSize:24}}>${(it.price*it.quantity).toFixed(2)}</div>
+                <div className="price" style={{fontSize:24}}>₹{(price * quantity).toFixed(2)}</div>
               </div>
             </div>
           </div>
-        ))}
+        )})}
       </div>
       
       <div className="cart-summary">
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
           <div>
             <div style={{fontSize:14,color:'var(--text-secondary)',marginBottom:4}}>Total Items</div>
-            <div style={{fontSize:18,fontWeight:700}}>{items.reduce((sum,i)=>sum+i.quantity,0)}</div>
+            <div style={{fontSize:18,fontWeight:700}}>{Array.isArray(items) ? items.reduce((sum,i)=>sum+(i?.quantity||0),0) : 0}</div>
           </div>
           <div style={{textAlign:'right'}}>
             <div style={{fontSize:14,color:'var(--text-secondary)',marginBottom:4}}>Grand Total</div>
-            <div className="price" style={{fontSize:32}}>${total.toFixed(2)}</div>
+            <div className="price" style={{fontSize:32}}>₹{total.toFixed(2)}</div>
           </div>
         </div>
         <button className="btn" style={{width:'100%',padding:16,fontSize:16}}>Proceed to Checkout</button>

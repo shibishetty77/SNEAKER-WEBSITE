@@ -1,0 +1,228 @@
+import { useRef, useMemo } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { 
+  OrbitControls, 
+  PerspectiveCamera, 
+  Environment, 
+  Float, 
+  ContactShadows, 
+  BakeShadows,
+  AccumulativeShadows,
+  RandomizedLight,
+  Lightformer,
+  Stage
+} from '@react-three/drei';
+import * as THREE from 'three';
+import { RunningShoe, BasketballShoe, CasualSneaker, HikingBoot } from './ShoeVariants';
+
+function Shoe({ colors, variant = 'classic' }) {
+  const shoeRef = useRef();
+  
+  // Create materials with enhanced PBR properties
+  const materials = useMemo(() => {
+    return {
+      base: new THREE.MeshPhysicalMaterial({
+        roughness: 0.3,
+        metalness: 0.1,
+        clearcoat: 0.3,
+        clearcoatRoughness: 0.1,
+        reflectivity: 0.5,
+        envMapIntensity: 1.5,
+        color: new THREE.Color(colors.base)
+      }),
+      toe: new THREE.MeshPhysicalMaterial({
+        roughness: 0.25,
+        metalness: 0.15,
+        clearcoat: 0.4,
+        clearcoatRoughness: 0.1,
+        reflectivity: 0.6,
+        envMapIntensity: 1.5,
+        color: new THREE.Color(colors.toe)
+      }),
+      tongue: new THREE.MeshPhysicalMaterial({
+        roughness: 0.7,
+        metalness: 0.05,
+        clearcoat: 0.1,
+        clearcoatRoughness: 0.4,
+        envMapIntensity: 0.8,
+        color: new THREE.Color(colors.tongue)
+      }),
+      sides: new THREE.MeshPhysicalMaterial({
+        roughness: 0.35,
+        metalness: 0.1,
+        clearcoat: 0.3,
+        clearcoatRoughness: 0.2,
+        reflectivity: 0.5,
+        envMapIntensity: 1.2,
+        color: new THREE.Color(colors.sides)
+      }),
+      sole: new THREE.MeshPhysicalMaterial({
+        roughness: 0.6,
+        metalness: 0.1,
+        clearcoat: 0.2,
+        clearcoatRoughness: 0.4,
+        transmission: 0.05,
+        thickness: 0.5,
+        envMapIntensity: 1,
+        color: new THREE.Color(colors.sole)
+      }),
+      heel: new THREE.MeshPhysicalMaterial({
+        roughness: 0.3,
+        metalness: 0.15,
+        clearcoat: 0.4,
+        clearcoatRoughness: 0.1,
+        reflectivity: 0.6,
+        envMapIntensity: 1.5,
+        color: new THREE.Color(colors.heel)
+      }),
+      logo: new THREE.MeshPhysicalMaterial({
+        roughness: 0.1,
+        metalness: 0.9,
+        clearcoat: 1,
+        clearcoatRoughness: 0.1,
+        reflectivity: 1,
+        envMapIntensity: 2,
+        emissive: new THREE.Color(colors.logo),
+        emissiveIntensity: 0.4,
+        color: new THREE.Color(colors.logo)
+      }),
+      laces: new THREE.MeshPhysicalMaterial({
+        roughness: 0.8,
+        metalness: 0.05,
+        clearcoat: 0.1,
+        clearcoatRoughness: 0.5,
+        envMapIntensity: 0.8,
+        color: new THREE.Color(colors.laces)
+      })
+    };
+  }, [colors]);
+
+  // Smooth animations and effects
+  useFrame((state) => {
+    if (shoeRef.current) {
+      // Smooth floating animation
+      const time = state.clock.getElapsedTime();
+      shoeRef.current.position.y = -0.5 + Math.sin(time * 0.5) * 0.1;
+      
+      // Interactive rotation based on mouse
+      const targetRotationY = state.mouse.x * Math.PI * 0.5;
+      shoeRef.current.rotation.y += (targetRotationY - shoeRef.current.rotation.y) * 0.05;
+      
+      // Subtle tilt based on mouse Y
+      const targetTiltX = state.mouse.y * Math.PI * 0.15;
+      shoeRef.current.rotation.x += (targetTiltX - shoeRef.current.rotation.x) * 0.05;
+    }
+
+    // Dynamic material effects
+    Object.keys(materials).forEach(key => {
+      if (materials[key].emissiveIntensity !== undefined) {
+        materials[key].emissiveIntensity = 0.4 + Math.sin(state.clock.getElapsedTime() * 2) * 0.2;
+      }
+      if (key === 'logo') {
+        materials[key].clearcoat = 0.8 + Math.sin(state.clock.getElapsedTime()) * 0.2;
+      }
+    });
+  });
+
+  // Render different shoe variants
+  if (variant === 'running') {
+    return <RunningShoe colors={colors} materials={materials} />;
+  } else if (variant === 'basketball') {
+    return <BasketballShoe colors={colors} materials={materials} />;
+  } else if (variant === 'casual') {
+    return <CasualSneaker colors={colors} materials={materials} />;
+  } else if (variant === 'hiking') {
+    return <HikingBoot colors={colors} materials={materials} />;
+  }
+
+  // Classic athletic shoe (default)
+  return (
+    <group ref={shoeRef} position={[0, -0.5, 0]} scale={[0.8, 0.8, 0.8]}>
+      {/* Outsole - Bottom with Tread Pattern */}
+      <mesh position={[0, 0.08, 0.1]} castShadow receiveShadow>
+        <boxGeometry args={[1.9, 0.15, 3.6]} />
+        <primitive object={materials.sole} attach="material" />
+      </mesh>
+    </group>
+  );
+}
+
+export default function ShoeCustomizer3D({ colors, autoRotate = true, variant = 'classic' }) {
+  return (
+    <div style={{ width: '100%', height: '500px', background: 'transparent' }}>
+      <Canvas 
+        shadows 
+        dpr={[1, 2]} 
+        camera={{ position: [4, 2.5, 4], fov: 45 }}
+        gl={{ 
+          preserveDrawingBuffer: true,
+          toneMappingExposure: 1.2
+        }}
+      >
+        <color attach="background" args={['#000000']} />
+        
+        {/* Studio Environment with Shadows */}
+        <Stage
+          intensity={1}
+          environment="studio"
+          shadows={{ type: 'accumulative', color: '#d9d9d9', opacity: 0.2, blur: 3 }}
+          adjustCamera={false}
+        >
+          <Float speed={1.5} rotationIntensity={0.5} floatIntensity={0.5}>
+            <Shoe colors={colors} variant={variant} />
+          </Float>
+        </Stage>
+
+        {/* Enhanced Lighting Setup */}
+        <ambientLight intensity={0.2} />
+        <spotLight
+          position={[5, 5, 5]}
+          angle={0.15}
+          penumbra={1}
+          decay={2}
+          intensity={2}
+          castShadow
+          shadow-mapSize={[2048, 2048]}
+          shadow-bias={-0.0001}
+        />
+        <pointLight position={[-5, 2, -5]} intensity={0.5} color="#b0c4de" />
+        <pointLight position={[5, -2, -5]} intensity={0.5} color="#00ff88" />
+
+        {/* Studio Lighting Effects */}
+        <group position={[0, 4, 0]}>
+          <Lightformer 
+            intensity={4} 
+            rotation-x={Math.PI / 2} 
+            position={[0, 5, -9]} 
+            scale={[10, 10, 1]} 
+          />
+        </group>
+
+        {/* Contact Shadows */}
+        <ContactShadows
+          opacity={0.8}
+          scale={10}
+          blur={3}
+          far={10}
+          resolution={256}
+          color="#000000"
+        />
+
+        {/* Camera Controls */}
+        <OrbitControls
+          autoRotate={autoRotate}
+          autoRotateSpeed={2}
+          enablePan={false}
+          enableZoom={true}
+          minPolarAngle={Math.PI / 4}
+          maxPolarAngle={Math.PI / 1.5}
+          minDistance={3}
+          maxDistance={10}
+          target={[0, 0, 0]}
+        />
+        
+        <BakeShadows />
+      </Canvas>
+    </div>
+  );
+}

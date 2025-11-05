@@ -47,7 +47,7 @@ export default function Home(){
         <h3>Filter Premium Collection</h3>
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(220px, 1fr))',gap:24}}>
           <div>
-            <label style={{marginBottom:12}}>Max Price: ${Number(maxPrice).toFixed(0)}</label>
+            <label style={{marginBottom:12}}>Max Price: ₹{Number(maxPrice).toFixed(0)}</label>
             <input type="range" min={0} max={1000} step={10} value={maxPrice} onChange={(e)=>setMaxPrice(Number(e.target.value))} style={{width:'100%'}} />
           </div>
           <div>
